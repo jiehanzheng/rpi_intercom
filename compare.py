@@ -12,7 +12,7 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 
-def the_score(x1, y1, x2, y2, quiet=False):
+def point_score(x1, y1, x2, y2, quiet=False):
   dx = abs(x1-x2)
   y_ratio = y1/y2
 
@@ -26,7 +26,7 @@ def the_score(x1, y1, x2, y2, quiet=False):
   return 1/(x_comp+y_comp+1)
 
 
-def fft_similarity(frq1, frq2, Y1, Y2):
+def fft_similarity(frq1, frq2, Y1, Y2, quiet=True):
   total_score = 0
   qualified_samples = 0
   for i1,x1 in enumerate(frq1):  # sample 1
@@ -35,26 +35,30 @@ def fft_similarity(frq1, frq2, Y1, Y2):
       best_match = 0
       for i2,x2 in enumerate(frq2):
         if x2 >= 70 and x2 <= 7000 and Y2[i2] >= 20:
-          # print ( round(the_score(x1,Y1[i1],x2,Y2[i2]), 3) )
-          best_match = max(best_match, the_score(x1,Y1[i1],x2,Y2[i2],quiet=True))
+          # print ( round(point_score(x1,Y1[i1],x2,Y2[i2]), 3) )
+          best_match = max(best_match, point_score(x1,Y1[i1],x2,Y2[i2],quiet=True))
       total_score = total_score + best_match
 
-  print "{total_score}/{qualified_samples} = {quotient}".format(
-    total_score=total_score,
-    qualified_samples=qualified_samples,
-    quotient=total_score/qualified_samples)
+  if not quiet:
+    print "{total_score}/{qualified_samples} = {quotient}".format(
+      total_score=total_score,
+      qualified_samples=qualified_samples,
+      quotient=total_score/qualified_samples)
 
-  return total_score/qualified_samples
+  if qualified_samples is not 0:
+    return total_score/qualified_samples
+  else:
+    return None
 
 
-def main():
+if __name__ == "__main__":
   # almost the same
-  wf1 = wave.open("samples/jiehan-jiehan-s6.wav", 'rb')
-  wf2 = wave.open("samples/jiehan-kane-s6.wav", 'rb')
+  # wf1 = wave.open("samples/jiehan-jiehan-s6.wav", 'rb')
+  # wf2 = wave.open("samples/jiehan-kane-s6.wav", 'rb')
 
   # completely different
-  # wf1 = wave.open("samples/kane-kane-s3.wav", 'rb')
-  # wf2 = wave.open("samples/jiehan-jiehan-s2.wav", 'rb')
+  wf1 = wave.open("samples/jiehan-jiehan-s2.wav", 'rb')
+  wf2 = wave.open("samples/kane-kane-s3.wav", 'rb')
 
   CHUNK = 1024
   FORMAT = pyaudio.paInt16
@@ -139,7 +143,3 @@ def main():
   print min( fft_similarity(frq1, frq2, Y1=Y1, Y2=Y2), fft_similarity(frq2, frq1, Y1=Y2, Y2=Y1) )
 
   raw_input("Exit?")
-
-
-if __name__ == "__main__":
-  main()
