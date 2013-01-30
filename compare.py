@@ -12,6 +12,11 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 
+def normalize(Y):
+  sum_y = sum(Y)
+  return map(lambda Y: (Y/sum_y)*2000, Y)
+
+
 def point_score(x1, y1, x2, y2, quiet=False):
   dx = abs(x1-x2)
   y_ratio = y1/y2
@@ -108,6 +113,8 @@ if __name__ == "__main__":
   Y1 = Y1[range(signal_length//2)]
   Y1 = map( lambda x: abs(x), Y1 )  # for each one of them, take the abs val
 
+  Y1 = normalize(Y1)
+
   subplot(2,1,1)
   title("audio 1")
   xlim(70,7000)
@@ -127,6 +134,8 @@ if __name__ == "__main__":
   Y2 = fft( np.array( [ int(point) for point in audio2 ] ) )/signal_length
   Y2 = Y2[range(signal_length//2)]
   Y2 = map( lambda x: abs(x), Y2 )  # for each one of them, take the abs val
+
+  Y2 = normalize(Y2)
 
   subplot(2,1,2)
   title("audio 2")

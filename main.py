@@ -11,7 +11,7 @@ import inspect
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
-from compare import point_score, fft_similarity
+from compare import point_score, fft_similarity, normalize
 
 
 def main():
@@ -20,8 +20,8 @@ def main():
   wf2 = wave.open("samples/jiehan-kane.wav", 'rb')
 
   # completely different
-  # wf1 = wave.open("samples/kane-kane-s3.wav", 'rb')
-  # wf2 = wave.open("samples/jiehan-jiehan-s2.wav", 'rb')
+  # wf1 = wave.open("samples/kane-kane.wav", 'rb')
+  # wf2 = wave.open("samples/jiehan-jiehan.wav", 'rb')
 
   CHUNK = 1024
   FORMAT = pyaudio.paInt16
@@ -55,7 +55,7 @@ def main():
   # ion()
 
   for i2,slice2 in enumerate(slices2):
-    slice_scores = (-1,0)
+    slice_scores = []
 
     for i1,slice1 in enumerate(slices1):
       # frequency calculations for audio 1 (TEMPLATE)
@@ -69,14 +69,7 @@ def main():
       Y1 = Y1[range(signal_length//2)]
       Y1 = map( lambda x: abs(x), Y1 )  # for each one of them, take the abs val
 
-      # subplot(2,1,1)
-      # title("audio 1")
-      # xlim(70,7000)
-      # ylim(0,170)
-      # # xlim(0,300)
-      # # ylim(0,350)
-      # fill_between(frq1,Y1)
-      # plot(frq1, Y1, 'r.')
+      Y1 = normalize(Y1)
 
       # frequency calculations for audio 2
       signal_length = len(slice2)
@@ -89,25 +82,28 @@ def main():
       Y2 = Y2[range(signal_length//2)]
       Y2 = map( lambda x: abs(x), Y2 )  # for each one of them, take the abs val
 
-      # subplot(2,1,2)
-      # title("audio 2")
-      # xlim(70,7000)
-      # ylim(0,170)
-      # # xlim(0,300)
-      # # ylim(0,350)
-      # fill_between(frq2,Y2)
-      # plot(frq2, Y2, 'r.')
+      Y2 = normalize(Y2)
 
       # show()
 
       # for each pairs (70-7000), calculate the score and show it on the graph
       # print min( fft_similarity(frq1, frq2, Y1=Y1, Y2=Y2), fft_similarity(frq2, frq1, Y1=Y2, Y2=Y1) )
-      worst_similarity = min( fft_similarity(frq1, frq2, Y1=Y1, Y2=Y2), fft_similarity(frq2, frq1, Y1=Y2, Y2=Y1) )
-      if best_match[1] < worst_similarity:
-        best_match = (i1, worst_similarity)
+      slice_scores.append( (i1, min( fft_similarity(frq1, frq2, Y1=Y1, Y2=Y2), fft_similarity(frq2, frq1, Y1=Y2, Y2=Y1) ) ) )
 
-    print i2, "<->", best_match[0], ":", best_match[1]
+    sort_similarity_list(slice_scores)
+    print i2, "=",
+    print_similarity_list(slice_scores)
+    print
 
+
+def sort_similarity_list(the_list):
+  the_list.sort(key=lambda x: x[1], reverse=True)
+
+
+def print_similarity_list(the_list):
+  for item in the_list:
+    if item[1]:
+      print item[0],":",round(item[1],3),",",
 
 if __name__ == "__main__":
   main()

@@ -16,7 +16,7 @@ def main():
 
   if USE_INPUT_FILE:
     # wf = wave.open("samples/jiehan-jiehan.wav", 'rb')
-    wf = wave.open("samples/kane-kane.wav", 'rb')
+    wf = wave.open("samples/jiehan-kane.wav", 'rb')
 
   CHUNK = 1024
   FORMAT = pyaudio.paInt16
@@ -67,7 +67,7 @@ def main():
   plot([x for x in range(len(audio))],audio)
   xticks( np.arange(0,len(audio),SLICE_SIZE) )
 
-  plt.figure()
+  # plt.figure()
 
   # frequency calculations for each slice
   for slice_id, slice in enumerate(slices):
@@ -101,21 +101,21 @@ def main():
   show()
 
 
-def moving_average(index, src, window_size=3):
-  starting_index = index - window_size//2
-  ending_index = index + window_size//2
+# def moving_average(index, src, window_size=3):
+#   starting_index = index - window_size//2
+#   ending_index = index + window_size//2
 
-  # calculate the sum
-  current_sum = 0
+#   # calculate the sum
+#   current_sum = 0
 
-  for current_index in range(starting_index, ending_index+1):
-    try:
-      current_sum = current_sum + src[current_index]
-    except IndexError:
-      window_size = window_size - 1
+#   for current_index in range(starting_index, ending_index+1):
+#     try:
+#       current_sum = current_sum + src[current_index]
+#     except IndexError:
+#       window_size = window_size - 1
 
-  # return sum/size
-  return current_sum/window_size if window_size is not 0 else 0
+#   # return sum/size
+#   return current_sum/window_size if window_size is not 0 else 0
 
 if __name__ == "__main__":
   main()

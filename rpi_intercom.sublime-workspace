@@ -4,6 +4,30 @@
 		"selected_items":
 		[
 			[
+				"print",
+				"print_similarity_list"
+			],
+			[
+				"sort",
+				"sort_similarity_list"
+			],
+			[
+				"the",
+				"the_list"
+			],
+			[
+				"slice",
+				"slice_scores"
+			],
+			[
+				"best",
+				"best_match"
+			],
+			[
+				"slices",
+				"slices1"
+			],
+			[
 				"fft",
 				"fft_similarity"
 			],
@@ -168,10 +192,6 @@
 				"time_slot"
 			],
 			[
-				"sort",
-				"sort_by  (function)"
-			],
-			[
 				"orga",
 				"organize_departure_time_slots"
 			],
@@ -256,10 +276,6 @@
 				"isEditor"
 			],
 			[
-				"slice",
-				"slice_id"
-			],
-			[
 				"sub",
 				"subplot2grid"
 			],
@@ -282,10 +298,6 @@
 			[
 				"oauth",
 				"oauthAuthenticated"
-			],
-			[
-				"print",
-				"printStackTrace"
 			],
 			[
 				"row",
@@ -502,31 +514,11 @@
 			[
 				"stat",
 				"start_node"
-			],
-			[
-				"create",
-				"create_sub_list"
-			],
-			[
-				"po",
-				"pointer_group_allocator"
-			],
-			[
-				"new",
-				"new_list_length"
 			]
 		]
 	},
 	"buffers":
 	[
-		{
-			"file": "compare.py",
-			"settings":
-			{
-				"buffer_size": 3789,
-				"line_ending": "Unix"
-			}
-		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -632,6 +624,9 @@
 	},
 	"file_history":
 	[
+		"/mnt/docs/jiehan/Dropbox/Mr. Maher website/Database/buffaloh_wrd2.sql",
+		"/home/jiehan/backups/csday/20130124 140001.sql",
+		"/home/jiehan/workspace/rpi/fourier.py",
 		"/home/jiehan/backups/csday/20130120 220001.sql",
 		"/home/jiehan/bin/csday_backup",
 		"/home/jiehan/backups/csday/20130120 185826.sql",
@@ -726,7 +721,6 @@
 		"/mnt/docs/.NTFS-3G/UserMapping",
 		"/home/jiehan/workspace/rpi/compare-old.py",
 		"/home/jiehan/workspace/rpi/slicing.py",
-		"/home/jiehan/workspace/rpi/fourier.py",
 		"/home/jiehan/workspace/peddie_taxi/app/views/accommodations/_request_item.html.erb",
 		"/home/jiehan/workspace/peddie_taxi/Gemfile",
 		"/home/jiehan/workspace/peddie_taxi/config/settings.yml",
@@ -757,9 +751,7 @@
 		"/home/jiehan/workspace/peddie_taxi/app/helpers/application_helper.rb",
 		"/home/jiehan/workspace/peddie_taxi/app/views/requests/new.html.erb",
 		"/home/jiehan/workspace/peddie_taxi/app/controllers/requests_controller.rb",
-		"/home/jiehan/workspace/peddie_taxi/app/views/requests/_form.html.erb",
-		"/home/jiehan/workspace/peddie_taxi/app/controllers/accommodations_controller.rb",
-		"/home/jiehan/workspace/peddie_taxi/app/views/accommodation_changes/index.html.erb"
+		"/home/jiehan/workspace/peddie_taxi/app/views/requests/_form.html.erb"
 	],
 	"find":
 	{
@@ -778,6 +770,12 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"min( fft_similarity(frq1, frq2, Y1=Y1, Y2=Y2), fft_similarity(frq2, frq1, Y1=Y2, Y2=Y1) )",
+			"slices1",
+			"the_score",
+			"audio2",
+			"audio1",
+			"audio",
 			"7",
 			"myself",
 			"   {",
@@ -899,13 +897,7 @@
 			".length",
 			"in_a_day_",
 			"start",
-			"][][",
-			"%>\n",
-			"[][]",
-			"request_departureTimeSlots",
-			"departureTimeSlots[]",
-			"input-mini",
-			"span8"
+			"][]["
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -931,37 +923,8 @@
 	"groups":
 	[
 		{
-			"selected": 0,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "compare.py",
-					"settings":
-					{
-						"buffer_size": 3789,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1306,
-								1306
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				}
 			]
 		}
 	],
@@ -1010,6 +973,10 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"sli",
+				"slicing.py"
+			],
 			[
 				"comp",
 				"compare.py"
@@ -1517,10 +1484,6 @@
 			[
 				"configrb",
 				"config/routes.rb"
-			],
-			[
-				"cont",
-				"app/controllers/sessions_controller.rb"
 			]
 		],
 		"width": 0.0
