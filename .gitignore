@@ -1,2 +1,3 @@
 *.sublime-*
 *.out
+*.pyc

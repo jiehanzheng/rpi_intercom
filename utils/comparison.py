@@ -10,6 +10,7 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
   if fingerprint in lookup_tbl:
     return lookup_tbl[fingerprint]
 
+  # TODO: oh this is very unpythonic, dont even want to look at it.
   total_score = 0
   qualified_samples = 0
   for i1,x1 in enumerate(sample_freq):  # sample 1
@@ -17,7 +18,7 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
       qualified_samples = qualified_samples + 1
       best_match = 0
       for i2,x2 in enumerate(tmpl_freq):
-        if x2 >= 70 and x2 <= 7000 and tmpl_intensity[i2] >= intensity_threshold:
+        if x1 >= max(70,x1-150) and x2 <= min(x1+150,7000) and tmpl_intensity[i2] >= intensity_threshold:
           best_match = max(best_match, point_score(x1,sample_intensity[i1],x2,tmpl_intensity[i2],quiet=True))
       total_score = total_score + best_match
 
