@@ -519,6 +519,46 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "/home/jiehan/workspace/rpi_intercom/compare.py",
+			"settings":
+			{
+				"buffer_size": 3990,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/home/jiehan/workspace/rpi_intercom/main.py",
+			"settings":
+			{
+				"buffer_size": 2985,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/home/jiehan/workspace/rpi_intercom/__init__.py",
+			"settings":
+			{
+				"buffer_size": 141,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/home/jiehan/workspace/rpi_intercom/utils/input.py",
+			"settings":
+			{
+				"buffer_size": 4,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/home/jiehan/workspace/rpi_intercom/fourier.py",
+			"settings":
+			{
+				"buffer_size": 3057,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -624,6 +664,8 @@
 	},
 	"file_history":
 	[
+		"/home/jiehan/workspace/rpi_intercom/slicing.py",
+		"/home/jiehan/workspace/rpi_intercom/rpi_intercom.sublime-project",
 		"/mnt/docs/jiehan/Dropbox/Mr. Maher website/Database/buffaloh_wrd2.sql",
 		"/home/jiehan/backups/csday/20130124 140001.sql",
 		"/home/jiehan/workspace/rpi/fourier.py",
@@ -749,9 +791,7 @@
 		"/home/jiehan/workspace/peddie_taxi/app/controllers/venues_controller.rb",
 		"/home/jiehan/workspace/peddie_taxi/app/views/venues/show.html.erb",
 		"/home/jiehan/workspace/peddie_taxi/app/helpers/application_helper.rb",
-		"/home/jiehan/workspace/peddie_taxi/app/views/requests/new.html.erb",
-		"/home/jiehan/workspace/peddie_taxi/app/controllers/requests_controller.rb",
-		"/home/jiehan/workspace/peddie_taxi/app/views/requests/_form.html.erb"
+		"/home/jiehan/workspace/peddie_taxi/app/views/requests/new.html.erb"
 	],
 	"find":
 	{
@@ -770,6 +810,10 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"moving",
+			"Y1",
+			"=B",
+			"A",
 			"min( fft_similarity(frq1, frq2, Y1=Y1, Y2=Y2), fft_similarity(frq2, frq1, Y1=Y2, Y2=Y1) )",
 			"slices1",
 			"the_score",
@@ -893,11 +937,7 @@
 			"user",
 			"@user",
 			"user",
-			"self.",
-			".length",
-			"in_a_day_",
-			"start",
-			"][]["
+			"self."
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -905,6 +945,8 @@
 		"regex": true,
 		"replace_history":
 		[
+			"=A",
+			"B",
 			"\\n\\n",
 			"",
 			"\\n",
@@ -923,8 +965,145 @@
 	"groups":
 	[
 		{
+			"selected": 3,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "/home/jiehan/workspace/rpi_intercom/compare.py",
+					"settings":
+					{
+						"buffer_size": 3990,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1993,
+								1993
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 675.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/home/jiehan/workspace/rpi_intercom/main.py",
+					"settings":
+					{
+						"buffer_size": 2985,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2950,
+								2950
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/home/jiehan/workspace/rpi_intercom/__init__.py",
+					"settings":
+					{
+						"buffer_size": 141,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								39,
+								39
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/home/jiehan/workspace/rpi_intercom/utils/input.py",
+					"settings":
+					{
+						"buffer_size": 4,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4,
+								4
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "/home/jiehan/workspace/rpi_intercom/fourier.py",
+					"settings":
+					{
+						"buffer_size": 3057,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								192,
+								192
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -973,6 +1152,10 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"",
+				"slicing.py"
+			],
 			[
 				"sli",
 				"slicing.py"
@@ -1096,10 +1279,6 @@
 			[
 				"seedrb",
 				"db/seeds.rb"
-			],
-			[
-				"",
-				"spec/fixtures/shifts.yml"
 			],
 			[
 				"count",
