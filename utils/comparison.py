@@ -3,7 +3,13 @@ from debug import indented_print
 
 
 def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity, 
-                   intensity_threshold=20, quiet=True):
+                   intensity_threshold=20, quiet=True,
+                   lookup_tbl=dict()):
+  fingerprint = id(sample_freq),id(sample_intensity),id(tmpl_freq),id(tmpl_intensity)
+
+  if fingerprint in lookup_tbl:
+    return lookup_tbl[fingerprint]
+
   total_score = 0
   qualified_samples = 0
   for i1,x1 in enumerate(sample_freq):  # sample 1
@@ -22,8 +28,10 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
       quotient=total_score/qualified_samples)
 
   if qualified_samples is not 0:
+    lookup_tbl[fingerprint] = total_score/qualified_samples
     return total_score/qualified_samples
   else:
+    lookup_tbl[fingerprint] = 0
     return 0
 
 
@@ -42,9 +50,11 @@ def point_score(x1, y1, x2, y2, quiet=False):
 
 
 def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0, 
-                         lookup_tbl=dict(), cumulative_score=0, try_history=[],
+                         cumulative_score=0, try_history=[],
+                         fft_similarity_lookup_tbl=dict(), 
                          sample_fft_lookup_table=dict(),
                          tmpl_fft_lookup_table=dict()):
+  # sample slice that is too far behind tmpl should not be matched
   if try_history.count(tmpl_index) >= 2:
     return 0
 
@@ -55,11 +65,20 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
   tmpl_fft_freq, tmpl_fft_intensity = fft_freq_intensity(tmpl[tmpl_index],
                                                          lookup_tbl=tmpl_fft_lookup_table)
 
+  this_fft_similarity = fft_similarity(sample_fft_freq,
+                                       sample_fft_intensity,
+                                       tmpl_fft_freq,
+                                       tmpl_fft_intensity)
+
+  # do not continue trying impossible routes
+  if this_fft_similarity <= 0.5 and tmpl_index > 2 and sample_index > 2:
+    try:
+      return cumulative_score/len(try_history)
+    except:
+      return 0
+
   try_history.append(tmpl_index)
-  cumulative_score = cumulative_score + fft_similarity(sample_fft_freq,
-                                                       sample_fft_intensity,
-                                                       tmpl_fft_freq,
-                                                       tmpl_fft_intensity)
+  cumulative_score = cumulative_score + this_fft_similarity
 
   stay_score = None
   adv_score = None
@@ -67,24 +86,22 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
   # stay
   if tmpl_index < len(tmpl) and sample_index+1 < len(sample):
     stay_score = max_slice_tree_score(sample, tmpl, sample_index+1, tmpl_index, 
-                                      lookup_tbl=lookup_tbl, 
                                       cumulative_score=cumulative_score,
                                       try_history=try_history[:], 
+                                      fft_similarity_lookup_tbl=fft_similarity_lookup_tbl, 
                                       sample_fft_lookup_table=sample_fft_lookup_table,
                                       tmpl_fft_lookup_table=tmpl_fft_lookup_table)
   # advance
   if tmpl_index+1 < len(tmpl) and sample_index+1 < len(sample):
     adv_score = max_slice_tree_score(sample, tmpl, sample_index+1, tmpl_index+1, 
-                                     lookup_tbl=lookup_tbl, 
                                      cumulative_score=cumulative_score,
                                      try_history=try_history[:], 
+                                     fft_similarity_lookup_tbl=fft_similarity_lookup_tbl, 
                                      sample_fft_lookup_table=sample_fft_lookup_table,
                                      tmpl_fft_lookup_table=tmpl_fft_lookup_table)
 
+  # at the bottom of the tree
   if stay_score is None and adv_score is None:
-    try:
-      return cumulative_score/len(try_history)
-    except:
-      return 0
+    return cumulative_score/len(try_history)
 
   return max(stay_score, adv_score)
