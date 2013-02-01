@@ -11,18 +11,14 @@ def fft_freq_intensity(sound, rate=44100, lookup_tbl=dict()):
   sound_addr = id(sound)
 
   if sound_addr in lookup_tbl:
-    # print "fft cache hit"
     return lookup_tbl[sound_addr]
 
-  # print "fft cache MISS"
   signal_length = len(sound)
   ks = range(signal_length)
   T = signal_length/float(rate)
   freq = map(lambda k: k/T, ks)
   freq = freq[:signal_length//2]
 
-  # print sound
-  
   Y = fft([int(point) for point in sound])/signal_length
   Y = Y[range(signal_length//2)]
   Y = map(lambda y: abs(y), Y)

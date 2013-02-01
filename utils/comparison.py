@@ -18,8 +18,8 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
       qualified_samples = qualified_samples + 1
       best_match = 0
       for i2,x2 in enumerate(tmpl_freq):
-        if x1 >= max(70,x1-150) and x2 <= min(x1+150,7000) and tmpl_intensity[i2] >= intensity_threshold:
-          best_match = max(best_match, point_score(x1,sample_intensity[i1],x2,tmpl_intensity[i2],quiet=True))
+        if x2 >= max(70,x1-150) and x2 <= min(x1+150,7000) and tmpl_intensity[i2] >= intensity_threshold:
+          best_match = max(best_match, point_score(x1,sample_intensity[i1],x2,tmpl_intensity[i2]))
       total_score = total_score + best_match
 
   if not quiet:
@@ -36,16 +36,16 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
     return 0
 
 
-def point_score(x1, y1, x2, y2, quiet=False):
+def point_score(x1, y1, x2, y2, quiet=True):
   dx = abs(x1-x2)
   y_ratio = y1/y2
 
   x_comp = (0.015*dx)**4
-  y_comp = abs(y_ratio-1)**20
+  y_comp = abs(y_ratio-1)**6
 
   if not quiet:
     print "({x1:3.0f}[{y1:3.0f}], {x2:3.0f}([{y2:3.0f}])): dx={dx:5.1f}, y_ratio={y_ratio:6.2f}, x_comp={x_comp:8.3f}, y_comp={y_comp:15.4f}".format(
-             x1=x1,    y1=y1,      x2=x2,     y2=y2,       dx=dx,        y_ratio=y_ratio,        x_comp=x_comp,        y_comp=y_comp),
+             x1=x1,    y1=y1,      x2=x2,     y2=y2,       dx=dx,        y_ratio=y_ratio,        x_comp=x_comp,        y_comp=y_comp)
 
   return 1/(x_comp+y_comp+1)
 
@@ -74,9 +74,15 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
   # do not continue trying impossible routes
   if this_fft_similarity <= 0.5 and tmpl_index > 2 and sample_index > 2:
     try:
+      indented_print(len(try_history), "-- [give up]")
       return cumulative_score/len(try_history)
     except:
       return 0
+
+  try:
+    indented_print(len(try_history), "-- score =", cumulative_score/len(try_history))
+  except:
+    indented_print(len(try_history), "-- score =", 0)
 
   try_history.append(tmpl_index)
   cumulative_score = cumulative_score + this_fft_similarity
@@ -105,4 +111,5 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
   if stay_score is None and adv_score is None:
     return cumulative_score/len(try_history)
 
+  indented_print(len(try_history), "-> max =", max(stay_score, adv_score))
   return max(stay_score, adv_score)
