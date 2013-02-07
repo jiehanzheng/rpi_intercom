@@ -1,19 +1,107 @@
-import sys
-from utils.input import wave_to_list
-from utils.slicing import slice_audio
-from utils.fft import fft_freq_intensity
-from utils.comparison import max_slice_tree_score
+from __future__ import division
+from multiprocessing import Process
+from collections import deque
+from utils.input import wave_to_list, microphone_read_chunk
+from utils.comparison import find_out_which_peer_this_guy_mentioned
+from utils.data import Peer
+import pyaudio
+import time
+import struct
+import copy
+
+
+start_time = time.time()
+peers = []
+realtime_stream = deque()
+slice_comparison_lookup = dict()
+twice_longest_template_length = 0
+analyzer = Process()
+reset_threshold = 20
+missed_cycles = 0
+do_not_kill_analyzer = True
 
 
 def main():
-  tmpl = wave_to_list(sys.argv[1])
-  sample = wave_to_list(sys.argv[2])
+  RECORD_RATE = 44100
+  RECORD_FORMAT = pyaudio.paInt16
+  CHUNK = 2048
 
-  tmpl_slices = slice_audio(tmpl, 2048)
-  sample_slices = slice_audio(sample, 2048)
+  global peers
+  peers.append(Peer('jiehan', wave_to_list('samples/jiehan-jiehan.wav'), CHUNK)) 
+  peers.append(Peer('kane', wave_to_list('samples/kane-kane.wav'), CHUNK))
 
-  print len(tmpl_slices), "in tmpl and", len(sample_slices), "in sample"
-  print max_slice_tree_score(sample_slices, tmpl_slices)
+  # start recording process
+  p = pyaudio.PyAudio()
+  p_stream = p.open(format=RECORD_FORMAT,
+                    channels=1,
+                    rate=RECORD_RATE,
+                    input=True,
+                    frames_per_buffer=CHUNK,
+                    stream_callback=receive_new_slice)
+
+  global twice_longest_template_length
+  longest_template_length = max([len(peer.audio) for peer in peers])
+  twice_longest_template_length = 2*longest_template_length
+  
+  global realtime_stream
+  realtime_stream = deque(maxlen=twice_longest_template_length)
+
+  p_stream.start_stream()
+
+  # is there a better way to not let this exit?
+  while p_stream.is_active():
+    time.sleep(RECORD_RATE/CHUNK)
+
+
+def receive_new_slice(in_data, frame_count, time_info, status):
+  print "new audio data of size %s saved" % frame_count
+  count = len(in_data)/2
+  format = "%dh"%(count)
+
+  global realtime_stream
+  realtime_stream.append(struct.unpack(format, in_data))
+
+  global twice_longest_template_length
+  if twice_longest_template_length == len(realtime_stream):
+
+    # kill existing analyzers
+    global analyzer, missed_cycles, reset_threshold, do_not_kill_analyzer
+    if analyzer.is_alive():
+      missed_cycles = missed_cycles + 1
+      # print "missed %d" % missed_cycles
+      if not do_not_kill_analyzer:
+        print("analyzer timed out")
+        analyzer.terminate()
+
+    if not analyzer.is_alive():
+      global peers, slice_comparison_lookup
+      analyzer = Process(target=find_out_which_peer_this_guy_mentioned,
+                         args=(copy.copy(realtime_stream), peers, 
+                               slice_comparison_lookup, start_lan_stream))
+      analyzer.start()
+
+    # restart the current analyzer if we missed too much
+    # and keep allowing it to run until it completely finishes once
+    # also, we want to make sure not to start another analyzer
+    if missed_cycles > reset_threshold:
+      do_not_kill_analyzer = True
+
+  return ("", pyaudio.paContinue)
+
+
+def start_lan_stream(peer, confidence=0):
+  analyzer_complete_run()
+  print "--->", peer.address, confidence
+
+
+def end_lan_stream(peer):
+  pass
+
+
+def analyzer_complete_run():
+  global missed_cycles, do_not_kill_analyzer
+  missed_cycles = 0
+  do_not_kill_analyzer = False
 
 
 if __name__ == "__main__":
