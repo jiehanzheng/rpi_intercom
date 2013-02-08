@@ -27,8 +27,8 @@ def main():
   CHUNK = 2048
 
   global peers
-  peers.append(Peer('jiehan', wave_to_list('samples/jiehan-jiehan.wav'), CHUNK)) 
-  peers.append(Peer('kane', wave_to_list('samples/kane-kane.wav'), CHUNK))
+  peers.append(Peer('jiehan', wave_to_list('samples/jiehan-kane.wav'), CHUNK)) 
+  # peers.append(Peer('kane', wave_to_list('samples/kane-kane.wav'), CHUNK))
 
   # start recording process
   p = pyaudio.PyAudio()
@@ -54,7 +54,7 @@ def main():
 
 
 def receive_new_slice(in_data, frame_count, time_info, status):
-  print "new audio data of size %s saved" % frame_count
+  # print "new audio data of size %s saved" % frame_count
   count = len(in_data)/2
   format = "%dh"%(count)
 
@@ -67,6 +67,7 @@ def receive_new_slice(in_data, frame_count, time_info, status):
     # kill existing analyzers
     global analyzer, missed_cycles, reset_threshold, do_not_kill_analyzer
     if analyzer.is_alive():
+
       missed_cycles = missed_cycles + 1
       # print "missed %d" % missed_cycles
       if not do_not_kill_analyzer:

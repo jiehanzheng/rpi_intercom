@@ -24,3 +24,7 @@ def microphone_read_chunk(stream, chunk=2048):
   format = "%dh"%(count)
 
   return struct.unpack(format, data)
+
+
+def faked_realtime_read_chunk(stream, chunk=2048):
+  pass
