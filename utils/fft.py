@@ -1,10 +1,27 @@
 from __future__ import division
 from scipy import fft, arange
+import math
 
 
 def normalize(Y):
+  # # percentage
+  # sum_y = sum(Y)
+  # return map(lambda Y: (Y/sum_y)*2000, Y)
+
+  # # log function
+  # return map(lambda Y: math.log(Y,1.03), Y)
+
+  # normalize, but changes < 2.5x
   sum_y = sum(Y)
-  return map(lambda Y: (Y/sum_y)*2000, Y)
+  rate = (3000/sum_y)
+  if rate >= 1:
+    rate = min(2.5, rate)
+  else:
+    rate = max(1/2.5, rate)
+  return map(lambda y: y*rate, Y)
+
+  # # do not normalize
+  # return Y
 
 
 def fft_freq_intensity(sound, rate=44100, lookup_tbl=dict()):

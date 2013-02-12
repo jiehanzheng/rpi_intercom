@@ -53,11 +53,11 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
   total_score = 0
   qualified_samples = 0
   for i1,x1 in enumerate(sample_freq):  # sample 1
-    if x1 >= 70 and x1 <= 7000 and sample_intensity[i1] >= intensity_threshold:
+    if sample_intensity[i1] >= intensity_threshold and x1 >= 70 and x1 <= 7000:
       qualified_samples = qualified_samples + 1
       best_match = 0
       for i2,x2 in enumerate(tmpl_freq):
-        if x2 >= max(70,x1-150) and x2 <= min(x1+150,7000) and tmpl_intensity[i2] >= intensity_threshold:
+        if tmpl_intensity[i2] >= intensity_threshold*0.5 and x2 >= max(70,x1-200) and x2 <= min(x1+200,7000):
           best_match = max(best_match, point_score(x1,sample_intensity[i1],x2,tmpl_intensity[i2]))
       total_score = total_score + best_match
 
@@ -77,17 +77,20 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
 
 
 def point_score(x1, y1, x2, y2):
-  dx = abs(x1-x2)
-  y_ratio = y1/y2
+  dx = abs(x1-x2) # the closer to 0, the better
+  y_ratio = y1/y2 # the closer to 1, the better
+  y_margin = max(y1,y2)**2.2/1000000
 
   x_comp = (0.015*dx)**4
-  y_comp = abs(y_ratio-1)**6
+  y_comp = max(0,abs(y_ratio-1)-y_margin)**5
 
-  # # DEBUG
-  # print "({x1:3.0f}[{y1:3.0f}], {x2:3.0f}([{y2:3.0f}])): dx={dx:5.1f}, y_ratio={y_ratio:6.2f}, x_comp={x_comp:8.3f}, y_comp={y_comp:15.4f} => {score:8.3f}".format(
-  #          x1=x1,    y1=y1,      x2=x2,     y2=y2,       dx=dx,        y_ratio=y_ratio,        x_comp=x_comp,        y_comp=y_comp,           score=1/(x_comp+y_comp+1))
+  # DEBUG
+  print "({x1:4.0f}[{y1:3.0f}], {x2:4.0f}([{y2:3.0f}])): dx={dx:5.1f}, y_ratio={y_ratio:6.2f}-{y_margin:3.2f}, x_comp={x_comp:8.3f}, y_comp={y_comp:15.4f} => {score:4.3f}".format(
+           x1=x1,    y1=y1,      x2=x2,     y2=y2,       dx=dx,        y_ratio=y_ratio,        y_margin=y_margin, x_comp=x_comp,     y_comp=y_comp,           score=1/(x_comp+y_comp+1))
 
-  return 1/(x_comp+y_comp+1)
+  # TODO let's find a more mathmagically correct formula...
+  point_weight = y_margin+1
+  return (1/(x_comp+y_comp+1), point_weight)
 
 
 def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0, 
@@ -99,7 +102,7 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
   if try_history.count(tmpl_index) >= 2:
     return 0
 
-  # DEBUG
+  # # DEBUG
   # indented_print(len(try_history), "comparing sample", sample_index, "against tmpl", tmpl_index)
 
   fft_similarity_signature = (id(sample), sample_index, id(tmpl), tmpl_index)
@@ -120,7 +123,7 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
     fft_similarity_lookup_tbl[fft_similarity_signature] = this_fft_similarity
 
   # do not continue trying impossible routes
-  if this_fft_similarity <= 0.5 and tmpl_index > 2 and sample_index > 2:
+  if this_fft_similarity <= 0.4 and tmpl_index > 2 and sample_index > 2:
     try:
       # DEBUG
       # indented_print(len(try_history), "-- [give up]")
@@ -129,7 +132,7 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
     except:
       return 0
 
-  # DEBUG
+  # # DEBUG
   # try:
   #   indented_print(len(try_history), "-- score =", cumulative_score/len(try_history))
   # except:
