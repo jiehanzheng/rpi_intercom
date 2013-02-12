@@ -1,5 +1,4 @@
-from __future__ import division
-from multiprocessing import Process
+from threading import Thread
 from collections import deque
 from utils.input import wave_to_list, microphone_read_chunk
 from utils.comparison import find_out_which_peer_this_guy_mentioned
@@ -15,10 +14,8 @@ peers = []
 realtime_stream = deque()
 slice_comparison_lookup = dict()
 twice_longest_template_length = 0
-analyzer = Process()
-reset_threshold = 20
+analyzer = Thread()
 missed_cycles = 0
-do_not_kill_analyzer = True
 
 
 def main():
@@ -28,7 +25,7 @@ def main():
 
   global peers
   peers.append(Peer('jiehan', wave_to_list('samples/jiehan-kane.wav'), CHUNK)) 
-  # peers.append(Peer('kane', wave_to_list('samples/kane-kane.wav'), CHUNK))
+  peers.append(Peer('kane', wave_to_list('samples/kane-kane.wav'), CHUNK))
 
   # start recording process
   p = pyaudio.PyAudio()
@@ -65,27 +62,19 @@ def receive_new_slice(in_data, frame_count, time_info, status):
   if twice_longest_template_length == len(realtime_stream):
 
     # kill existing analyzers
-    global analyzer, missed_cycles, reset_threshold, do_not_kill_analyzer
+    global analyzer, missed_cycles
     if analyzer.is_alive():
-
       missed_cycles = missed_cycles + 1
-      # print "missed %d" % missed_cycles
-      if not do_not_kill_analyzer:
-        print("analyzer timed out")
-        analyzer.terminate()
-
-    if not analyzer.is_alive():
+      print "analyzer is behind realtime_stream by", missed_cycles, "slices"
+    else:
       global peers, slice_comparison_lookup
-      analyzer = Process(target=find_out_which_peer_this_guy_mentioned,
+
+      # TODO: cache cleanup
+
+      analyzer = Thread(target=find_out_which_peer_this_guy_mentioned,
                          args=(copy.copy(realtime_stream), peers, 
                                slice_comparison_lookup, start_lan_stream))
       analyzer.start()
-
-    # restart the current analyzer if we missed too much
-    # and keep allowing it to run until it completely finishes once
-    # also, we want to make sure not to start another analyzer
-    if missed_cycles > reset_threshold:
-      do_not_kill_analyzer = True
 
   return ("", pyaudio.paContinue)
 
@@ -100,9 +89,8 @@ def end_lan_stream(peer):
 
 
 def analyzer_complete_run():
-  global missed_cycles, do_not_kill_analyzer
+  global missed_cycles
   missed_cycles = 0
-  do_not_kill_analyzer = False
 
 
 if __name__ == "__main__":

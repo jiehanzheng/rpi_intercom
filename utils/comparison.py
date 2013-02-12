@@ -1,11 +1,18 @@
+from __future__ import division
 from fft import fft_freq_intensity
 from debug import indented_print
-import time
+
+#
+#       SIMILARITY SCALE
+#
+#     [---------|----|----]
+#     0        0.5        1 
+#    diff    neutral  identical
+#
 
 
 def find_out_which_peer_this_guy_mentioned(guy, peers, slice_comparison_lookup, callback):
   """Returns the best guess and our confidence"""
-  # print "find_out_which_peer_this_guy_mentioned()"
 
   best_peer = None
   best_peer_confidence = 0
@@ -14,9 +21,7 @@ def find_out_which_peer_this_guy_mentioned(guy, peers, slice_comparison_lookup, 
     similarity = max_slice_tree_score(guy, peer.audio, 
                                       fft_similarity_lookup_tbl=slice_comparison_lookup)
     
-    # print peer.address, similarity
-
-    if similarity > best_peer_confidence:
+    if similarity >= best_peer_confidence:
       best_peer_confidence = similarity
       best_peer = peer
   
@@ -24,7 +29,7 @@ def find_out_which_peer_this_guy_mentioned(guy, peers, slice_comparison_lookup, 
 
 
 def fft_similarity_conservative(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity, 
-                                intensity_threshold=20, 
+                                intensity_threshold=20,
                                 lookup_tbl=dict()):
   """Do FFT both ways and return the minimum value to be conservative"""
   return min(
@@ -57,7 +62,7 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
       total_score = total_score + best_match
 
   try:
-    # DEBUG
+    # # DEBUG
     # print "{total_score}/{qualified_samples} = {quotient}".format(
     #   total_score=total_score,
     #   qualified_samples=qualified_samples,
@@ -66,8 +71,9 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
     lookup_tbl[fingerprint] = total_score/qualified_samples
     return total_score/qualified_samples
   except:
-    lookup_tbl[fingerprint] = 0
-    return 0
+    # if no points are qualified, return 0.5, meaning "neutral"
+    lookup_tbl[fingerprint] = 0.5
+    return 0.5
 
 
 def point_score(x1, y1, x2, y2):
