@@ -71,14 +71,13 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
     lookup_tbl[fingerprint] = total_score/qualified_samples
     return total_score/qualified_samples
   except:
-    # if no points are qualified, return 0.5, meaning "neutral"
-    lookup_tbl[fingerprint] = 0.5
-    return 0.5
+    lookup_tbl[fingerprint] = 0.3
+    return 0.3
 
 
 def point_score(x1, y1, x2, y2):
-  dx = abs(x1-x2) # the closer to 0, the better
-  y_ratio = y1/y2 # the closer to 1, the better
+  dx = abs(x1-x2)  # the closer to 0, the better
+  y_ratio = y1/y2  # the closer to 1, the better
   y_margin = max(y1,y2)**2.2/1000000
 
   x_comp = (0.015*dx)**4
@@ -90,7 +89,7 @@ def point_score(x1, y1, x2, y2):
 
   # TODO let's find a more mathmagically correct formula...
   point_weight = y_margin+1
-  return (1/(x_comp+y_comp+1), point_weight)
+  return 1/(x_comp+y_comp+1)
 
 
 def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0, 
