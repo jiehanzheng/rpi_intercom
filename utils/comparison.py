@@ -1,6 +1,7 @@
 from __future__ import division
 from fft import fft_freq_intensity
 from debug import indented_print
+from numpy import searchsorted
 
 #
 #       SIMILARITY SCALE
@@ -28,6 +29,10 @@ def find_out_which_peer_this_guy_mentioned(guy, peers, slice_comparison_lookup, 
   callback(best_peer, best_peer_confidence)
 
 
+def listen_for_over(callback):
+  pass
+
+
 def fft_similarity_conservative(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity, 
                                 intensity_threshold=20,
                                 lookup_tbl=dict()):
@@ -48,34 +53,51 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
 
   if fingerprint in lookup_tbl:
     return lookup_tbl[fingerprint]
+  
+  #
+  # remove unnecessary elements to avoid N^2 useless calculations
+  # >7000, wastes ~15000^2 comparisons, doesnt cause index to shift
+  sample_freq = sample_freq[:searchsorted(sample_freq, 7000)]
+  tmpl_freq = tmpl_freq[:searchsorted(tmpl_freq, 7000)]
+  # <70, wastes 4900 comparisons, but how much does it cost to find index and slice?
+  # TODO
 
   # TODO: oh this is very unpythonic, dont even want to look at it.
-  total_score = 0
-  qualified_samples = 0
+  sample2_intensity_threshold = intensity_threshold*0.5
+  weighted_score = 0
+  total_weight = 0
   for i1,x1 in enumerate(sample_freq):  # sample 1
-    if sample_intensity[i1] >= intensity_threshold and x1 >= 70 and x1 <= 7000:
-      qualified_samples = qualified_samples + 1
-      best_match = 0
+    if sample_intensity[i1] >= intensity_threshold and x1 >= 70:
+      best_match_score = 0
+      weight_of_best_match = 0
       for i2,x2 in enumerate(tmpl_freq):
-        if tmpl_intensity[i2] >= intensity_threshold*0.5 and x2 >= max(70,x1-200) and x2 <= min(x1+200,7000):
-          best_match = max(best_match, point_score(x1,sample_intensity[i1],x2,tmpl_intensity[i2]))
-      total_score = total_score + best_match
+        if tmpl_intensity[i2] >= sample2_intensity_threshold and x2 >= max(70,x1-150) and x2 <= x1+150:
+          this_score, this_weight = point_score(x1,sample_intensity[i1],x2,tmpl_intensity[i2])
+          if this_score > best_match_score:
+            best_match_score = this_score
+            weight_of_best_match = this_weight
+      weighted_score = weighted_score + best_match_score
+      total_weight = total_weight + weight_of_best_match
 
   try:
     # # DEBUG
-    # print "{total_score}/{qualified_samples} = {quotient}".format(
-    #   total_score=total_score,
-    #   qualified_samples=qualified_samples,
-    #   quotient=total_score/qualified_samples)
+    # print "{weighted_score}/{total_weight} = {quotient}".format(
+    #   weighted_score=weighted_score,
+    #   total_weight=total_weight,
+    #   quotient=weighted_score/total_weight)
 
-    lookup_tbl[fingerprint] = total_score/qualified_samples
-    return total_score/qualified_samples
+    lookup_tbl[fingerprint] = weighted_score/total_weight
+    return weighted_score/total_weight
   except:
-    lookup_tbl[fingerprint] = 0.3
-    return 0.3
+    # not enough information to work with
+    # return 0.5 saying we are neutral
+    lookup_tbl[fingerprint] = 0.5
+    return 0.5
 
 
 def point_score(x1, y1, x2, y2):
+  #
+  # score
   dx = abs(x1-x2)  # the closer to 0, the better
   y_ratio = y1/y2  # the closer to 1, the better
   y_margin = max(y1,y2)**2.2/1000000
@@ -83,13 +105,16 @@ def point_score(x1, y1, x2, y2):
   x_comp = (0.015*dx)**4
   y_comp = max(0,abs(y_ratio-1)-y_margin)**5
 
-  # DEBUG
-  print "({x1:4.0f}[{y1:3.0f}], {x2:4.0f}([{y2:3.0f}])): dx={dx:5.1f}, y_ratio={y_ratio:6.2f}-{y_margin:3.2f}, x_comp={x_comp:8.3f}, y_comp={y_comp:15.4f} => {score:4.3f}".format(
-           x1=x1,    y1=y1,      x2=x2,     y2=y2,       dx=dx,        y_ratio=y_ratio,        y_margin=y_margin, x_comp=x_comp,     y_comp=y_comp,           score=1/(x_comp+y_comp+1))
+  # # DEBUG
+  # print "({x1:4.0f}[{y1:3.0f}], {x2:4.0f}([{y2:3.0f}])): dx={dx:5.1f}, y_ratio={y_ratio:6.2f}-{y_margin:3.2f}, x_comp={x_comp:8.3f}, y_comp={y_comp:15.4f} => {score:4.3f}".format(
+  #          x1=x1,    y1=y1,      x2=x2,     y2=y2,       dx=dx,        y_ratio=y_ratio,        y_margin=y_margin, x_comp=x_comp,     y_comp=y_comp,           score=1/(x_comp+y_comp+1))
 
+  #
+  # weight
   # TODO let's find a more mathmagically correct formula...
   point_weight = y_margin+1
-  return 1/(x_comp+y_comp+1)
+
+  return ((1/(x_comp+y_comp+1))*point_weight, point_weight)
 
 
 def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0, 
@@ -122,7 +147,7 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
     fft_similarity_lookup_tbl[fft_similarity_signature] = this_fft_similarity
 
   # do not continue trying impossible routes
-  if this_fft_similarity <= 0.4 and tmpl_index > 2 and sample_index > 2:
+  if this_fft_similarity < 0.5 and tmpl_index > 2 and sample_index > 2:
     try:
       # DEBUG
       # indented_print(len(try_history), "-- [give up]")
