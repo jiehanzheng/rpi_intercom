@@ -69,11 +69,11 @@ def receive_new_slice(in_data, frame_count, time_info, status):
     else:
       global peers, slice_comparison_lookup
 
-      # TODO: cache cleanup
+      # FIXME: cache cleanup
 
       analyzer = Thread(target=find_out_which_peer_this_guy_mentioned,
-                         args=(copy.copy(realtime_stream), peers, 
-                               slice_comparison_lookup, start_lan_stream))
+                        args=(copy.copy(realtime_stream), peers, 
+                              slice_comparison_lookup, start_lan_stream))
       analyzer.start()
 
   return ("", pyaudio.paContinue)

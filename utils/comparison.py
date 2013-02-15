@@ -2,6 +2,7 @@ from __future__ import division
 from fft import fft_freq_intensity
 from debug import indented_print
 from numpy import searchsorted
+import scipy.weave as weave
 
 #
 #       SIMILARITY SCALE
@@ -10,6 +11,32 @@ from numpy import searchsorted
 #     0        0.5        1 
 #    diff    neutral  identical
 #
+
+
+point_score_struct_c = r"""
+  typedef struct {
+    double weighted_score;
+    double weight;
+  } score_info;
+"""
+
+
+# need #include <math.h>
+point_score_c = r"""
+  score_info point_score(double x1, double y1, double x2, double y2) {
+    double dx = std::abs(x1-x2);
+    double y_ratio = y1/y2;
+    double y_margin = pow(std::max(y1,y2),2.2)/1000000;
+
+    double x_comp = pow((0.015*dx),4);
+    double y_comp = pow(std::max((double)0,abs(y_ratio-1)-y_margin),(double)5);
+    double point_weight = y_margin+1;
+
+    score_info result = {(1/(x_comp+y_comp+1))*point_weight,
+                         point_weight};
+    return result;
+  }
+"""
 
 
 def find_out_which_peer_this_guy_mentioned(guy, peers, slice_comparison_lookup, callback):
@@ -37,13 +64,17 @@ def fft_similarity_conservative(sample_freq,sample_intensity, tmpl_freq,tmpl_int
                                 intensity_threshold=20,
                                 lookup_tbl=dict()):
   """Do FFT both ways and return the minimum value to be conservative"""
-  return min(
-             fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity, 
+  # return min(
+  #            fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity, 
+  #                           intensity_threshold, 
+  #                           lookup_tbl),
+  #            fft_similarity(tmpl_freq,tmpl_intensity, sample_freq,sample_intensity,
+  #                           intensity_threshold, 
+  #                           lookup_tbl))
+
+  return fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity, 
                             intensity_threshold, 
-                            lookup_tbl),
-             fft_similarity(tmpl_freq,tmpl_intensity, sample_freq,sample_intensity,
-                            intensity_threshold, 
-                            lookup_tbl))
+                            lookup_tbl)
 
 
 def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity, 
@@ -62,29 +93,49 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
   # <70, wastes 4900 comparisons, but how much does it cost to find index and slice?
   # TODO
 
-  # TODO: oh this is very unpythonic, dont even want to look at it.
-  sample2_intensity_threshold = intensity_threshold*0.5
-  weighted_score = 0
-  total_weight = 0
-  for i1,x1 in enumerate(sample_freq):  # sample 1
-    if sample_intensity[i1] >= intensity_threshold and x1 >= 70:
-      best_match_score = 0
-      weight_of_best_match = 0
-      for i2,x2 in enumerate(tmpl_freq):
-        if tmpl_intensity[i2] >= sample2_intensity_threshold and x2 >= max(70,x1-150) and x2 <= x1+150:
-          this_score, this_weight = point_score(x1,sample_intensity[i1],x2,tmpl_intensity[i2])
-          if this_score > best_match_score:
-            best_match_score = this_score
-            weight_of_best_match = this_weight
-      weighted_score = weighted_score + best_match_score
-      total_weight = total_weight + weight_of_best_match
+  weighted_score, total_weight = weave.inline(r"""
+    double y2_threshold = (double) intensity_threshold/2;
+
+    double weighted_score = 0;
+    double total_weight = 0;
+
+    for (int i1 = 0; i1 <= sample_freq.size(); i1++) {
+      double x1 = PyFloat_AsDouble(PyList_GetItem(sample_freq,i1));
+      double y1 = PyFloat_AsDouble(PyList_GetItem(sample_intensity,i1));
+
+      if (y1 >= intensity_threshold && x1 >= 70) {
+        double best_match_score = 0;
+        double weight_of_best_match = 0;
+
+        for (int i2 = 0; i2 <= tmpl_freq.size(); i2++) {
+          double x2 = PyFloat_AsDouble(PyList_GetItem(tmpl_freq,i2));
+          double y2 = PyFloat_AsDouble(PyList_GetItem(tmpl_intensity,i2));
+
+          if (y2 >= y2_threshold && x2 >= std::max((double)70,x1-150) && x2 <= x1+150) {
+            score_info this_score_info = point_score(x1, y1, x2, y2);
+
+            if (this_score_info.weighted_score > best_match_score) {
+              best_match_score = this_score_info.weighted_score;
+              weight_of_best_match = this_score_info.weight;
+            }
+          }
+        }
+
+        weighted_score += best_match_score;
+        total_weight += weight_of_best_match;
+      }
+    }
+
+    return_val = Py_BuildValue("(dd)", weighted_score, total_weight);""",
+               ['sample_freq', 'sample_intensity', 'tmpl_freq', 'tmpl_intensity',
+                'intensity_threshold'],
+               support_code=point_score_struct_c + point_score_c,
+               headers=['<math.h>'],
+               verbose=2)
 
   try:
-    # # DEBUG
-    # print "{weighted_score}/{total_weight} = {quotient}".format(
-    #   weighted_score=weighted_score,
-    #   total_weight=total_weight,
-    #   quotient=weighted_score/total_weight)
+    # DEBUG
+    print weighted_score, '/', total_weight, '=', weighted_score/total_weight
 
     lookup_tbl[fingerprint] = weighted_score/total_weight
     return weighted_score/total_weight
