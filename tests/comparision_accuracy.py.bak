@@ -37,7 +37,7 @@ def slice_comp():
 
   # assert result <= 0.4, "different slices should get a score of <0.4"
 
-  print("passed slice comparing tests in", time() - time_started, "seconds")
+  print "passed slice comparing tests in", time() - time_started, "seconds"
 
 
 def audio_comp():
@@ -49,4 +49,4 @@ def audio_comp():
   result = max_slice_tree_score(a1, a2)
 
   # assert result >= 0.7, "same thing score too low (%f)" % result
-  print("passed audio#1 comp in", time() - time_started, "seconds")
+  print "passed audio#1 comp in", time() - time_started, "seconds"

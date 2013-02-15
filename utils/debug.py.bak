@@ -1,5 +1,5 @@
-
-from matplotlib import *
+from __future__ import print_function
+from pylab import *
 
 
 def indented_print(indentation, *stuff):

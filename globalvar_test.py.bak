@@ -11,11 +11,11 @@ def main():
   while True:
     time.sleep(1)
     a = a + 1
-    print(a)
+    print a
 
 
 def override_a():
-  print("overriding a")
+  print "overriding a"
 
   global a
   a = 0

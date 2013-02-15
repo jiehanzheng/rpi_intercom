@@ -1,6 +1,6 @@
-
-from .fft import fft_freq_intensity
-from .debug import indented_print
+from __future__ import division
+from fft import fft_freq_intensity
+from debug import indented_print
 from numpy import searchsorted
 import scipy.weave as weave
 
@@ -131,7 +131,7 @@ def fft_similarity(sample_freq,sample_intensity, tmpl_freq,tmpl_intensity,
 
   try:
     # DEBUG
-    print(weighted_score, '/', total_weight, '=', weighted_score/total_weight)
+    print weighted_score, '/', total_weight, '=', weighted_score/total_weight
 
     lookup_tbl[fingerprint] = weighted_score/total_weight
     return weighted_score/total_weight

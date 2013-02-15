@@ -4,7 +4,7 @@ import re
 import pyaudio
 import struct
 import math
-from matplotlib import *
+from pylab import *
 from utils.input import wave_to_list
 from utils.slicing import slice_audio
 from utils.fft import fft_freq_intensity

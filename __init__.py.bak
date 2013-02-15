@@ -1,8 +1,8 @@
 from threading import Thread
 from collections import deque
-from .utils.input import wave_to_list, microphone_read_chunk
-from .utils.comparison import find_out_which_peer_this_guy_mentioned
-from .utils.data import Peer
+from utils.input import wave_to_list, microphone_read_chunk
+from utils.comparison import find_out_which_peer_this_guy_mentioned
+from utils.data import Peer
 import pyaudio
 import time
 import struct
@@ -65,7 +65,7 @@ def receive_new_slice(in_data, frame_count, time_info, status):
     global analyzer, missed_cycles
     if analyzer.is_alive():
       missed_cycles = missed_cycles + 1
-      print("analyzer is behind realtime_stream by", missed_cycles, "slices")
+      print "analyzer is behind realtime_stream by", missed_cycles, "slices"
     else:
       global peers, slice_comparison_lookup
 
@@ -81,7 +81,7 @@ def receive_new_slice(in_data, frame_count, time_info, status):
 
 def start_lan_stream(peer, confidence=0):
   analyzer_complete_run()
-  print("--->", peer.address, confidence)
+  print "--->", peer.address, confidence
 
 
 def end_lan_stream(peer):
