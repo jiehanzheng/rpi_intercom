@@ -1,21 +1,21 @@
 from tests.comparision_accuracy import *
 
-# import scipy.weave as weave
+slice_comp()
+audio_comp()
 
-# code = """
-# printf("%d\\n",a);
 
-# for (int i = 0; i < my_array.size(); i++) {
-#   std::cout << "in loop" << std::endl;
-#   std::cout << std::max(2,3) << std::endl;
-# }
-# """
+# import scipy.weave
 
-# my_array = [2,3,3]
 
 # a = 1
-# weave.inline(code,['a', 'my_array'],
-#              verbose=2)
 
-# slice_comp()
-audio_comp()
+# for _ in range(5):
+#   code = \
+#   """
+#   a = 2;
+#   """
+#   scipy.weave.inline(code, ['a'],
+#                      compiler='gcc',
+#                      verbose=1)
+
+#   print a
