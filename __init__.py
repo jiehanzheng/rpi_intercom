@@ -1,15 +1,16 @@
+from __future__ import division
 from threading import Thread
 from collections import deque
-from utils.input import wave_to_list, microphone_read_chunk
+from utils.input import wave_to_list
 from utils.comparison import find_out_which_peer_this_guy_mentioned
-from utils.data import Peer
+from utils.data import Peer, Slice
 import pyaudio
 import time
 import struct
 import copy
 
 
-start_time = time.time()
+# these need to be global since we cant control what args pyaudio calls back with
 peers = []
 realtime_stream = deque()
 slice_comparison_lookup = dict()
@@ -45,18 +46,18 @@ def main():
 
   p_stream.start_stream()
 
-  # is there a better way to not let this exit?
   while p_stream.is_active():
     time.sleep(RECORD_RATE/CHUNK)
 
 
 def receive_new_slice(in_data, frame_count, time_info, status):
   # print "new audio data of size %s saved" % frame_count
-  count = len(in_data)/2
-  format = "%dh"%(count)
+  
+  format = "%dh"%(frame_count)
 
   global realtime_stream
-  realtime_stream.append(struct.unpack(format, in_data))
+  realtime_stream.append(Slice(struct.unpack(format, in_data),
+                               'realtime_' + str(time.time())))
 
   global twice_longest_template_length
   if twice_longest_template_length == len(realtime_stream):

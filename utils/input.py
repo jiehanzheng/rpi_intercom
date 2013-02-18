@@ -19,13 +19,13 @@ def wave_to_list(wav_path, chunk=2048):
   return struct.unpack(format, frames)
 
 
-def microphone_read_chunk(stream, chunk=2048):
-  data = stream.read(chunk)
-  count = len(data)/2
-  format = "%dh"%(count)
+# def microphone_read_chunk(stream, chunk=2048):
+#   data = stream.read(chunk)
+#   count = len(data)/2
+#   format = "%dh"%(count)
 
-  return struct.unpack(format, data)
+#   return struct.unpack(format, data)
 
 
-def faked_realtime_read_chunk(stream, chunk=2048):
-  pass
+# def faked_realtime_read_chunk(stream, chunk=2048):
+#   pass

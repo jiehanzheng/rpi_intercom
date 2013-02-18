@@ -6,7 +6,7 @@ import struct
 import math
 from pylab import *
 from utils.input import wave_to_list
-from utils.slicing import slice_audio
+from utils.data import slice_audio
 from utils.fft import fft_freq_intensity
 
 sample_slices = slice_audio(wave_to_list(sys.argv[1]),2048)
