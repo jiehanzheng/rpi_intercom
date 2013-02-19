@@ -16,6 +16,10 @@ import time
 #
 
 
+fft_freq_intensity_c = r"""
+  PyObject *fft_freq_intensity;
+"""
+
 point_score_struct_c = r"""
   typedef struct {
     float weighted_score;
@@ -25,14 +29,14 @@ point_score_struct_c = r"""
 
 # need #include <math.h>
 point_score_c = r"""
-  score_info point_score(float x1, float y1, float x2, float y2) {
-    float dx = std::abs(x1-x2);
-    float y_ratio = y1/y2;
-    float y_margin = pow(std::max(y1,y2),2.2)/1000000;
+  score_info point_score(double x1, double y1, double x2, double y2) {
+    double dx = std::abs(x1-x2);
+    double y_ratio = y1/y2;
+    double y_margin = pow(std::max(y1,y2),2.2)/1000000;
 
-    float x_comp = pow((0.015*dx),4);
-    float y_comp = pow(std::max((float)0,abs(y_ratio-1)-y_margin),(float)5);
-    float point_weight = y_margin+1;
+    double x_comp = pow((0.015*dx),4);
+    double y_comp = pow(std::max((double)0,abs(y_ratio-1)-y_margin),(double)5);
+    double point_weight = y_margin+1;
 
     score_info result = {(1/(x_comp+y_comp+1))*point_weight,
                          point_weight};
@@ -41,16 +45,16 @@ point_score_c = r"""
 """
 
 fft_similarity_c = r"""
-  float fft_similarity(PyObject *sample_freq, PyObject *sample_intensity, 
+  double fft_similarity(PyObject *sample_freq, PyObject *sample_intensity, 
                        PyObject *tmpl_freq, PyObject *tmpl_intensity, 
                        int intensity_threshold) {
-    float y2_threshold = (float) intensity_threshold/2;
+    double y2_threshold = (double) intensity_threshold/2;
 
-    float weighted_score = 0;
-    float total_weight = 0;
+    double weighted_score = 0;
+    double total_weight = 0;
 
-    float x1, y1, x2, y2;
-    float best_match_score, weight_of_best_match;
+    double x1, y1, x2, y2;
+    double best_match_score, weight_of_best_match;
 
     for (Py_ssize_t i1 = 0; i1 < PyList_Size(sample_freq); i1++) {
       x1 = PyFloat_AsDouble(PyList_GetItem(sample_freq, i1));
@@ -64,7 +68,7 @@ fft_similarity_c = r"""
           x2 = PyFloat_AsDouble(PyList_GetItem(tmpl_freq, i2));
           y2 = PyFloat_AsDouble(PyList_GetItem(tmpl_intensity, i2));
 
-          if (y2 >= y2_threshold && x2 >= std::max((float)70,x1-150) && x2 <= x1+150) {
+          if (y2 >= y2_threshold && x2 >= std::max((double)70,x1-150) && x2 <= x1+150) {
             score_info this_score_info = point_score(x1, y1, x2, y2);
 
             if (this_score_info.weighted_score > best_match_score) {
@@ -79,7 +83,7 @@ fft_similarity_c = r"""
       }
     }
 
-    if (weighted_score != (float) 0) {
+    if (weighted_score != (double) 0) {
       // std::cout << weighted_score << " " << total_weight << " " << weighted_score/total_weight << std::endl;
       return weighted_score/total_weight;
     }
@@ -88,69 +92,13 @@ fft_similarity_c = r"""
   }
 """
 
-
-def find_out_which_peer_this_guy_mentioned(guy, peers, slice_comparison_lookup, callback):
-  """Returns the best guess and our confidence"""
-
-  best_peer = None
-  best_peer_confidence = 0
-  for peer in peers:
-    # print len(peer.audio), "in tmpl and", len(guy), "in sample"
-    similarity = max_slice_tree_score(guy, peer.audio, 
-                                      fft_similarity_lookup_tbl=slice_comparison_lookup)
-    
-    if similarity >= best_peer_confidence:
-      best_peer_confidence = similarity
-      best_peer = peer
-  
-  callback(best_peer, best_peer_confidence)
-
-
-def listen_for_over(callback):
-  pass
-
-
-def fft_similarity_conservative(sample_freq, sample_intensity,
-                                tmpl_freq, tmpl_intensity, 
-                                intensity_threshold=20):
-  """Do FFT both ways and return the minimum value to be conservative"""
-  return min(
-             fft_similarity(sample_freq[:],sample_intensity[:], tmpl_freq[:],tmpl_intensity[:], 
-                            intensity_threshold),
-             fft_similarity(tmpl_freq[:],tmpl_intensity[:], sample_freq[:],sample_intensity[:],
-                            intensity_threshold))
-
-
-def fft_similarity(sample_freq, sample_intensity,
-                   tmpl_freq, tmpl_intensity, 
-                   intensity_threshold=20):
-  # remove unnecessary elements to avoid N^2 useless calculations
-  # >7000, wastes ~15000^2 comparisons, doesnt cause index to shift
-  sample_freq = sample_freq[:searchsorted(sample_freq, 7000)]
-  tmpl_freq = tmpl_freq[:searchsorted(tmpl_freq, 7000)]
-  # <70, wastes 4900 comparisons, but how much does it cost to find index and slice?
-  # TODO
-
-  return weave.inline(r"""
-    return_val = Py_BuildValue("f", fft_similarity(sample_freq, 
-                                                   sample_intensity, tmpl_freq, 
-                                                   tmpl_intensity,
-                                                   intensity_threshold));
-""",
-    ['sample_freq', 'sample_intensity', 'tmpl_freq', 'tmpl_intensity',
-     'intensity_threshold'],
-    support_code=point_score_struct_c + point_score_c + fft_similarity_c,
-    headers=['<math.h>'],
-    # force=1,
-    verbose=2)
-
-
-def max_slice_tree_score(sample, tmpl, sample_index=5, tmpl_index=5, 
-                         cumulative_score=0, try_history=[],
-                         fft_similarity_lookup_tbl={}):
-  max_slice_tree_score_c = r"""
+max_slice_tree_score_c = r"""
+  double max_slice_tree_score(PyObject *sample, PyObject *tmpl,
+                              int sample_index, int tmpl_index,
+                              double cumulative_score, PyObject *try_history,
+                              PyObject *fft_similarity_lookup_tbl) {
     #ifdef DEBUG
-    std::cout << "checking repetition" << std::endl;
+      std::cout << "checking repetition" << std::endl;
     #endif
 
     // each slice must not repeat twice or more
@@ -257,67 +205,87 @@ def max_slice_tree_score(sample, tmpl, sample_index=5, tmpl_index=5,
         std::cout << "cached result, dict is now " << PyDict_Size(fft_similarity_lookup_tbl) << " long" << std::endl;
       #endif
     }
-    
+  }
 """
+
+
+def find_out_which_peer_this_guy_mentioned(guy, peers, slice_comparison_lookup, callback):
+  """Returns the best guess and our confidence"""
+
+  best_peer = None
+  best_peer_confidence = 0
+  for peer in peers:
+    # print len(peer.audio), "in tmpl and", len(guy), "in sample"
+    similarity = max_slice_tree_score(guy, peer.audio, 
+                                      fft_similarity_lookup_tbl=slice_comparison_lookup)
+    
+    if similarity >= best_peer_confidence:
+      best_peer_confidence = similarity
+      best_peer = peer
   
-  weave.inline(max_slice_tree_score_c,
+  callback(best_peer, best_peer_confidence)
+
+
+def listen_for_over(callback):
+  pass
+
+
+def fft_similarity_conservative(sample_freq, sample_intensity,
+                                tmpl_freq, tmpl_intensity, 
+                                intensity_threshold=20):
+  """Do FFT both ways and return the minimum value to be conservative"""
+  return min(
+             fft_similarity(sample_freq[:],sample_intensity[:], tmpl_freq[:],tmpl_intensity[:], 
+                            intensity_threshold),
+             fft_similarity(tmpl_freq[:],tmpl_intensity[:], sample_freq[:],sample_intensity[:],
+                            intensity_threshold))
+
+
+def fft_similarity(sample_freq, sample_intensity,
+                   tmpl_freq, tmpl_intensity, 
+                   intensity_threshold=20):
+  # remove unnecessary elements to avoid N^2 useless calculations
+  # >7000, wastes ~15000^2 comparisons, doesnt cause index to shift
+  sample_freq = sample_freq[:searchsorted(sample_freq, 7000)]
+  tmpl_freq = tmpl_freq[:searchsorted(tmpl_freq, 7000)]
+  # <70, wastes 4900 comparisons, but how much does it cost to find index and slice?
+  # TODO
+
+  return weave.inline(r"""
+    return_val = Py_BuildValue("f", fft_similarity(sample_freq, 
+                                                   sample_intensity, tmpl_freq, 
+                                                   tmpl_intensity,
+                                                   intensity_threshold));
+""",
+    ['sample_freq', 'sample_intensity', 'tmpl_freq', 'tmpl_intensity',
+     'intensity_threshold'],
+    support_code=point_score_struct_c + point_score_c + fft_similarity_c,
+    headers=['<math.h>'],
+    # force=1,
+    verbose=2)
+
+
+def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0, 
+                         cumulative_score=0, try_history=[],
+                         fft_similarity_lookup_tbl={}):
+    
+  weave.inline("""
+    ::fft_freq_intensity = fft_freq_intensity;
+
+    max_slice_tree_score(sample, tmpl,
+                         sample_index, tmpl_index,
+                         cumulative_score, try_history,
+                         fft_similarity_lookup_tbl);
+""",
     ['sample', 'tmpl', 'sample_index', 'tmpl_index', 
      'cumulative_score', 'try_history',
      'fft_similarity_lookup_tbl', 'fft_freq_intensity'],
-    support_code=point_score_struct_c + point_score_c + fft_similarity_c,
+    support_code=fft_freq_intensity_c + point_score_struct_c + point_score_c + fft_similarity_c + max_slice_tree_score_c,
     define_macros=[('DEBUG', None)],
     # define_macros=[],
     # force=1,
     verbose=2)
 
-  # # # DEBUG
-  # # indented_print(len(try_history), "comparing sample", sample_index, "against tmpl", tmpl_index, {'end': ''})
-
-
-  # # any slice must not repeat twice or more
-  # if try_history.count(tmpl_index) >= 2:
-  #   # # DEBUG
-  #   # print " -> return: too much repetition"
-  #   return 0
-
-  # # in addition, the current matching slice must not stretch more than 1.2x
-  # if tmpl_index > 2 and sample_index > 2 and (sample_index+1)/(tmpl_index+1) > 1.2:
-  #   # # # DEBUG
-  #   # print " -> return: too stretched"
-  #   return 0
-
-  # fft_similarity_signature = (sample[sample_index].id, tmpl[tmpl_index].id)
-
-  # if fft_similarity_signature in fft_similarity_lookup_tbl:
-  #   # print "cache hit"
-  #   this_fft_similarity = fft_similarity_lookup_tbl[fft_similarity_signature]
-  # else:
-  #   # print "cache MISS"
-  #   sample_fft_freq, sample_fft_intensity = fft_freq_intensity(sample[sample_index].data)
-  #   tmpl_fft_freq, tmpl_fft_intensity = fft_freq_intensity(tmpl[tmpl_index].data)
-  #   this_fft_similarity = fft_similarity_conservative(sample_fft_freq,
-  #                                                     sample_fft_intensity,
-  #                                                     tmpl_fft_freq,
-  #                                                     tmpl_fft_intensity)
-  #   fft_similarity_lookup_tbl[fft_similarity_signature] = this_fft_similarity
-
-  # # # DEBUG
-  # # print ':', this_fft_similarity
-
-  # # do not continue trying impossible routes
-  # if this_fft_similarity < 0.3 and tmpl_index > 2 and sample_index > 2:
-  #   # # DEBUG
-  #   # indented_print(len(try_history), " -> return: too bad so far")
-  #   return 0
-
-  # # # DEBUG
-  # # try:
-  # #   indented_print(len(try_history), "-- score =", cumulative_score/len(try_history))
-  # # except:
-  # #   indented_print(len(try_history), "-- score =", 0)
-
-  # try_history.append(tmpl_index)
-  # cumulative_score = cumulative_score + this_fft_similarity
 
   # stay_score = None
   # adv_score = None
