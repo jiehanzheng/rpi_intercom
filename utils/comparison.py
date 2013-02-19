@@ -41,8 +41,8 @@ point_score_c = r"""
 """
 
 fft_similarity_c = r"""
-  float fft_similarity(py::list sample_freq, py::list sample_intensity, 
-                       py::list tmpl_freq, py::list tmpl_intensity, 
+  float fft_similarity(PyObject *sample_freq, PyObject *sample_intensity, 
+                       PyObject *tmpl_freq, PyObject *tmpl_intensity, 
                        int intensity_threshold) {
     float y2_threshold = (float) intensity_threshold/2;
 
@@ -145,7 +145,7 @@ def fft_similarity(sample_freq, sample_intensity,
     verbose=2)
 
 
-def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0, 
+def max_slice_tree_score(sample, tmpl, sample_index=5, tmpl_index=5, 
                          cumulative_score=0, try_history=[],
                          fft_similarity_lookup_tbl={}):
   max_slice_tree_score_c = r"""
@@ -163,14 +163,14 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
 
       if (occurrences >= 2) {
         #ifdef DEBUG
-        std::cout << "return: too much repetition" << std::endl;
+          std::cout << "return: too much repetition" << std::endl;
         #endif
         return 0;
       }
     }
 
     #ifdef DEBUG
-    std::cout << "checking stretch rate" << std::endl;
+      std::cout << "checking stretch rate" << std::endl;
     #endif
 
     // in addition, the current matching slice must not stretch more than 1.2x
@@ -178,26 +178,26 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
     //     return 0
     if (tmpl_index > 2 && sample_index > 2 && (sample_index+1)/(tmpl_index+1) > 1.2) {
       #ifdef DEBUG
-      std::cout << "return: too stretched" << std::endl;
+        std::cout << "return: too stretched" << std::endl;
       #endif
       return 0;
     }
 
     #ifdef DEBUG
-    std::cout << "fetching slice ids" << std::endl;
+      std::cout << "fetching slice ids" << std::endl;
     #endif
 
     char *sample_id = PyString_AsString(PyObject_GetAttrString(PyList_GetItem(sample, sample_index), "id"));
     char *tmpl_id   = PyString_AsString(PyObject_GetAttrString(PyList_GetItem(tmpl, tmpl_index), "id"));
     
     #ifdef DEBUG
-    std::cout << "generating fp: ";
+      std::cout << "generating fp: ";
     #endif
 
     PyObject *fft_sim_fp = Py_BuildValue("(ss)", sample_id, tmpl_id);
 
     #ifdef DEBUG
-    std::cout << "(" << PyString_AsString(PyTuple_GetItem(fft_sim_fp, 0)) << ", " << PyString_AsString(PyTuple_GetItem(fft_sim_fp, 1)) << ")" << std::endl;
+      std::cout << "(" << PyString_AsString(PyTuple_GetItem(fft_sim_fp, 0)) << ", " << PyString_AsString(PyTuple_GetItem(fft_sim_fp, 1)) << ")" << std::endl;
     #endif
 
     double this_fft_similarity = 0.0;
@@ -209,38 +209,54 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
       // TODO: rewrite FFT function in C++
 
       #ifdef DEBUG
-      std::cout << "preparing FFT" << std::endl;
+        std::cout << "preparing FFT" << std::endl;
       #endif
 
       // FFT of sample
       PyObject *sample_result = PyObject_CallFunctionObjArgs(fft_freq_intensity, 
-                                                             PyList_GetItem(sample, sample_index), 
+                                                             PyObject_GetAttrString(PyList_GetItem(sample, sample_index), "data"), 
                                                              NULL);
 
       // FFT of tmpl
       PyObject *tmpl_result = PyObject_CallFunctionObjArgs(fft_freq_intensity, 
-                                                           PyList_GetItem(tmpl, tmpl_index), 
+                                                           PyObject_GetAttrString(PyList_GetItem(tmpl, tmpl_index), "data"), 
                                                            NULL);
+      
+      #ifdef DEBUG
+        std::cout << "FFT done" << std::endl;
+      #endif
+
+      std::cout << PyTuple_Check(sample_result) << std::endl;
+
+      PyObject *sample_freq, *sample_intensity, *tmpl_freq, *tmpl_intensity;
+      PyArg_ParseTuple(sample_result, "OO", &sample_freq, &sample_intensity);
+      PyArg_ParseTuple(tmpl_result, "OO", &tmpl_freq, &tmpl_intensity);
+
+      #ifdef DEBUG
+        std::cout << "sample_freq size: " << PyList_Size(sample_freq) << std::endl;
+        std::cout << "fetch done" << std::endl;
+      #endif
 
       // find lowest similarity of sample,tmpl and tmpl,sample
       // TODO take min
-      this_fft_similarity = fft_similarity(PyTuple_GetItem(sample_result, 0),
-                                           PyTuple_GetItem(sample_result, 1),
-                                           PyTuple_GetItem(tmpl_result, 0),
-                                           PyTuple_GetItem(tmpl_result, 1),
+      this_fft_similarity = fft_similarity(sample_freq,
+                                           sample_intensity,
+                                           tmpl_freq,
+                                           tmpl_intensity,
                                            20);
+
+      #ifdef DEBUG
+        std::cout << "similarity " << this_fft_similarity << std::endl;
+      #endif
 
       PyDict_SetItem(fft_similarity_lookup_tbl, 
                      fft_sim_fp, 
                      PyFloat_FromDouble(this_fft_similarity));
 
       #ifdef DEBUG
-      std::cout << "cached result, dict is now " << PyDict_Size(fft_similarity_lookup_tbl) << "long" << std::endl;
+        std::cout << "cached result, dict is now " << PyDict_Size(fft_similarity_lookup_tbl) << " long" << std::endl;
       #endif
-
     }
-
-
     
 """
   
@@ -251,6 +267,7 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
     support_code=point_score_struct_c + point_score_c + fft_similarity_c,
     define_macros=[('DEBUG', None)],
     # define_macros=[],
+    # force=1,
     verbose=2)
 
   # # # DEBUG
