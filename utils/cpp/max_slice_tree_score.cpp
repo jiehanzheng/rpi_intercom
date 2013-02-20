@@ -79,11 +79,12 @@ double max_slice_tree_score(PyObject *sample, PyObject *tmpl,
       std::cout << "FFT done" << std::endl;
     #endif
 
-    std::cout << PyTuple_Check(sample_result) << std::endl;
-
     PyObject *sample_freq, *sample_intensity, *tmpl_freq, *tmpl_intensity;
     PyArg_ParseTuple(sample_result, "OO", &sample_freq, &sample_intensity);
     PyArg_ParseTuple(tmpl_result, "OO", &tmpl_freq, &tmpl_intensity);
+
+    // Py_XDECREF(sample_result);
+    // Py_XDECREF(tmpl_result);
 
     #ifdef DEBUG
       std::cout << "sample_freq size: " << PyList_Size(sample_freq) << std::endl;
@@ -106,6 +107,8 @@ double max_slice_tree_score(PyObject *sample, PyObject *tmpl,
                    fft_sim_fp, 
                    PyFloat_FromDouble(this_fft_similarity));
 
+    Py_XDECREF(fft_sim_fp);
+
     #ifdef DEBUG
       std::cout << "cached result, dict is now " << PyDict_Size(fft_similarity_lookup_tbl) << " long" << std::endl;
     #endif
@@ -118,16 +121,43 @@ double max_slice_tree_score(PyObject *sample, PyObject *tmpl,
     return 0;
   }
 
+  #ifdef DEBUG
+    std::cout << "appending to history" << std::endl;
+  #endif
+
   PyList_Append(try_history, PyInt_FromLong(tmpl_index));
   cumulative_score += this_fft_similarity;
+
+  #ifdef DEBUG
+    std::cout << "appended to history" << std::endl;
+  #endif
 
   long stay_score = 0;
   long adv_score = 0;
 
-  if (tmpl_index <= PyList_Size(tmpl) && sample_index+1 < PyList_Size(sample)) {
+  if (tmpl_index < PyList_Size(tmpl) && sample_index+1 < PyList_Size(sample)) {
     stay_score = max_slice_tree_score(sample, tmpl, sample_index+1, tmpl_index, 
                                       cumulative_score,
-                                      try_history, // HOW DO YOU CLONE
-                                      fft_similarity_lookup_tbl=fft_similarity_lookup_tbl)
+                                      PyList_GetSlice(try_history, 
+                                                      0, 
+                                                      PyList_Size(try_history) - 1), 
+                                      fft_similarity_lookup_tbl);
   }
+
+  if (tmpl_index+1 < PyList_Size(tmpl) && sample_index+1 < PyList_Size(sample)) {
+    adv_score = max_slice_tree_score(sample, tmpl, sample_index+1, tmpl_index+1, 
+                                     cumulative_score,
+                                     PyList_GetSlice(try_history, 
+                                                     0, 
+                                                     PyList_Size(try_history) - 1), 
+                                     fft_similarity_lookup_tbl);
+  }
+
+  #ifdef DEBUG
+    std::cout << "done stay & adv" << std::endl;
+  #endif
+
+
+  Py_XDECREF(try_history);
+
 }

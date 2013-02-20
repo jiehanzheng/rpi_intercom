@@ -12,9 +12,9 @@ def slice_comp():
   s1 = fft_freq_intensity(wave_to_list('tests/samples/jiehan-jiehan_s8.wav'))
   s2 = fft_freq_intensity(wave_to_list('tests/samples/jiehan-kane_s7.wav'))
 
-  plot_fft(*s1)
-  plot_fft(*s2)
-  plot_show()
+  # plot_fft(*s1)
+  # plot_fft(*s2)
+  # plot_show()
   
   time_started = time()
   result = fft_similarity(s1[0], s1[1],
@@ -53,35 +53,35 @@ def audio_comp():
   result = max_slice_tree_score(a1, a2)
 
   print "jiehan: jiehan -- sean = ", result, "in", time() - time_started
+  assert result >= 0.7, "same thing score too low (%f)" % result
+
+
+  a1 = slice_audio(wave_to_list('tests/samples/jiehan-jiehan.wav'),2048, 'a1')
+  a2 = slice_audio(wave_to_list('tests/samples/jiehan-sean.wav'),2048, 'a2')
+
+  time_started = time()
+  
+  result = max_slice_tree_score(a1, a2)
+
+  print "jiehan: jiehan -- sean = ", result, "in", time() - time_started
   # assert result >= 0.7, "same thing score too low (%f)" % result
 
+  a1 = slice_audio(wave_to_list('tests/samples/jiehan-sean.wav'),2048, 'a1')
+  a2 = slice_audio(wave_to_list('tests/samples/kane-kane.wav'),2048, 'a2')
 
-  # a1 = slice_audio(wave_to_list('tests/samples/jiehan-jiehan.wav'),2048, 'a1')
-  # a2 = slice_audio(wave_to_list('tests/samples/jiehan-sean.wav'),2048, 'a2')
-
-  # time_started = time()
+  time_started = time()
   
-  # result = max_slice_tree_score(a1, a2)
+  result = max_slice_tree_score(a1, a2)
 
-  # print "jiehan: jiehan -- sean = ", result, "in", time() - time_started
-  # # assert result >= 0.7, "same thing score too low (%f)" % result
+  print "diff: sean -- kane = ", result, "in", time() - time_started
+  # assert result >= 0.7, "same thing score too low (%f)" % result
 
-  # a1 = slice_audio(wave_to_list('tests/samples/jiehan-sean.wav'),2048, 'a1')
-  # a2 = slice_audio(wave_to_list('tests/samples/kane-kane.wav'),2048, 'a2')
+  a1 = slice_audio(wave_to_list('tests/samples/jiehan-jiehan.wav'),2048, 'a1')
+  a2 = slice_audio(wave_to_list('tests/samples/kane-kane.wav'),2048, 'a2')
 
-  # time_started = time()
+  time_started = time()
   
-  # result = max_slice_tree_score(a1, a2)
+  result = max_slice_tree_score(a1, a2)
 
-  # print "diff: sean -- kane = ", result, "in", time() - time_started
-  # # assert result >= 0.7, "same thing score too low (%f)" % result
-
-  # a1 = slice_audio(wave_to_list('tests/samples/jiehan-jiehan.wav'),2048, 'a1')
-  # a2 = slice_audio(wave_to_list('tests/samples/kane-kane.wav'),2048, 'a2')
-
-  # time_started = time()
-  
-  # result = max_slice_tree_score(a1, a2)
-
-  # print "diff: jiehan -- kane = ", result, "in", time() - time_started
-  # # assert result >= 0.7, "same thing score too low (%f)" % result
+  print "diff: jiehan -- kane = ", result, "in", time() - time_started
+  # assert result >= 0.7, "same thing score too low (%f)" % result
