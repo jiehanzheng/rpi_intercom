@@ -22,6 +22,7 @@ point_score_struct_c = r"""
     float weighted_score;
     float weight;
   } score_info;
+
 """
 
 with open(os.path.join(os.path.dirname(__file__), 'cpp/point_score.cpp'), 'r') as f:
@@ -105,8 +106,9 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
     ['sample', 'tmpl', 'sample_index', 'tmpl_index', 
      'cumulative_score', 'try_history', 'fft_similarity_lookup_tbl'],
     support_code=point_score_struct_c + point_score_c + fft_freq_intensity_c + fft_similarity_c + max_slice_tree_score_c,
-    # define_macros=[('DEBUG', None)],
-    include_dirs=[os.path.join(os.path.dirname(__file__), 'cpp/')],
+    define_macros=[('DEBUG', None)],
+    include_dirs=[os.path.join(os.path.dirname(__file__), 'cpp')],
+    sources=['utils/cpp/kiss_fftr.c', 'utils/cpp/kiss_fft.c'],
     force=1,
     verbose=2)
 
