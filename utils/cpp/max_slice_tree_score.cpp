@@ -66,14 +66,12 @@ double max_slice_tree_score(PyObject *sample, PyObject *tmpl,
     #endif
 
     // FFT of sample
-    PyObject *sample_result = PyObject_CallFunctionObjArgs(fft_freq_intensity, 
-                                                           PyObject_GetAttrString(PyList_GetItem(sample, sample_index), "data"), 
-                                                           NULL);
+    PyObject *sample_result = fft_freq_intensity(PyObject_GetAttrString(PyList_GetItem(sample, sample_index), "data"), 
+                                                 44100);
 
     // FFT of tmpl
-    PyObject *tmpl_result = PyObject_CallFunctionObjArgs(fft_freq_intensity, 
-                                                         PyObject_GetAttrString(PyList_GetItem(tmpl, tmpl_index), "data"), 
-                                                         NULL);
+    PyObject *tmpl_result = fft_freq_intensity(PyObject_GetAttrString(PyList_GetItem(tmpl, tmpl_index), "data"), 
+                                               44100);
     
     #ifdef DEBUG
       std::cout << "FFT done" << std::endl;

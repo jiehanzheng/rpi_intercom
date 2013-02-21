@@ -17,10 +17,6 @@ import os.path
 #
 
 
-fft_freq_intensity_c = r"""
-  PyObject *fft_freq_intensity;
-"""
-
 point_score_struct_c = r"""
   typedef struct {
     float weighted_score;
@@ -28,7 +24,6 @@ point_score_struct_c = r"""
   } score_info;
 """
 
-# need #include <math.h>
 with open(os.path.join(os.path.dirname(__file__), 'cpp/point_score.cpp'), 'r') as f:
   point_score_c = f.read()
 
@@ -37,6 +32,9 @@ with open(os.path.join(os.path.dirname(__file__), 'cpp/fft_similarity.cpp'), 'r'
 
 with open(os.path.join(os.path.dirname(__file__), 'cpp/max_slice_tree_score.cpp'), 'r') as f:
   max_slice_tree_score_c = f.read()
+
+with open(os.path.join(os.path.dirname(__file__), 'cpp/fft_freq_intensity.cpp'), 'r') as f:
+  fft_freq_intensity_c = f.read()
 
 
 def find_out_which_peer_this_guy_mentioned(guy, peers, slice_comparison_lookup, callback):
@@ -90,7 +88,6 @@ def fft_similarity(sample_freq, sample_intensity,
     ['sample_freq', 'sample_intensity', 'tmpl_freq', 'tmpl_intensity',
      'intensity_threshold'],
     support_code=point_score_struct_c + point_score_c + fft_similarity_c,
-    headers=['<math.h>'],
     # force=1,
     verbose=2)
 
@@ -100,19 +97,17 @@ def max_slice_tree_score(sample, tmpl, sample_index=0, tmpl_index=0,
                          fft_similarity_lookup_tbl={}):
     
   weave.inline("""
-    ::fft_freq_intensity = fft_freq_intensity;
-
     max_slice_tree_score(sample, tmpl,
                          sample_index, tmpl_index,
                          cumulative_score, try_history,
                          fft_similarity_lookup_tbl);
 """,
     ['sample', 'tmpl', 'sample_index', 'tmpl_index', 
-     'cumulative_score', 'try_history',
-     'fft_similarity_lookup_tbl', 'fft_freq_intensity'],
-    support_code=fft_freq_intensity_c + point_score_struct_c + point_score_c + fft_similarity_c + max_slice_tree_score_c,
+     'cumulative_score', 'try_history', 'fft_similarity_lookup_tbl'],
+    support_code=point_score_struct_c + point_score_c + fft_freq_intensity_c + fft_similarity_c + max_slice_tree_score_c,
     # define_macros=[('DEBUG', None)],
-    # force=1,
+    include_dirs=[os.path.join(os.path.dirname(__file__), 'cpp/')],
+    force=1,
     verbose=2)
 
 

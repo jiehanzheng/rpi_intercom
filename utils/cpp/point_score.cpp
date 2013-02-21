@@ -1,3 +1,5 @@
+#include <math.h>
+
 score_info point_score(double x1, double y1, double x2, double y2) {
   double dx = std::abs(x1-x2);
   double y_ratio = y1/y2;
