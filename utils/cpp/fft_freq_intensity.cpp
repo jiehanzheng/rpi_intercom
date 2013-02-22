@@ -6,7 +6,7 @@ PyObject* fft_freq_intensity(PyObject *sample, int rate) {
     std::cout << "working on freq" << std::endl;
   #endif
 
-  int nfft = PyList_Size(sample);
+  int nfft = PyTuple_Size(sample);
 
   #ifdef DEBUG
     std::cout << "size determined: " << nfft << std::endl;
@@ -14,16 +14,16 @@ PyObject* fft_freq_intensity(PyObject *sample, int rate) {
 
   // declare kiss_fft_scalar's of size len(sample), for in and out
   kiss_fft_scalar rin[nfft];
-  std::complex<double> *cout;
+  std::complex<double> cout[nfft/2+1];
   memset(cout, 0, sizeof(std::complex<double>)*(nfft/2+1));
 
   #ifdef DEBUG
     std::cout << "memset done" << std::endl;
   #endif
 
-  // each in PyListObject --append--> kiss_fft_scalar[]
+  // each in PyTupleObject --append--> kiss_fft_scalar[]
   for (int i = 0; i < nfft; i++) {
-    rin[i] = PyInt_AsLong(PyList_GetItem(sample, i));
+    rin[i] = PyInt_AsLong(PyTuple_GetItem(sample, i));
   }
 
   #ifdef DEBUG
@@ -49,24 +49,33 @@ PyObject* fft_freq_intensity(PyObject *sample, int rate) {
   PyObject *freq_list, *intensity_list;
 
   // only half of our FFT result is useful, the other half is symmetric
-  freq_list = PyList_New((Py_ssize_t) nfft/2);
-  intensity_list = PyList_New((Py_ssize_t) nfft/2);
+  freq_list = PyTuple_New((Py_ssize_t) nfft/2);
+  intensity_list = PyTuple_New((Py_ssize_t) nfft/2);
 
   #ifdef DEBUG
-    std::cout << "made two PyList's" << std::endl;
+    std::cout << "made two PyTuple's" << std::endl;
   #endif
 
   // populate freq, intensity list
-  for (int i = 0; i < nfft/2; i++) {
-    PyList_Append(freq_list, PyFloat_FromDouble(i/(nfft/rate)));
-    PyList_Append(intensity_list, PyFloat_FromDouble(std::abs(cout[i])));
+  // PyTuple_SetItem(freq_list,      1, PyFloat_FromDouble(0));
+  // PyTuple_SetItem(intensity_list, 1, PyFloat_FromDouble(0));
+
+  #ifdef DEBUG
+    std::cout << "i = ";
+  #endif
+
+  for (int i = 0; i <= nfft/2; i++) {
+    #ifdef DEBUG
+      std::cout << i << ", ";
+    #endif
+
+    PyTuple_SetItem(freq_list,      i, PyFloat_FromDouble((double) i/((double) nfft/rate)));
+    PyTuple_SetItem(intensity_list, i, PyFloat_FromDouble(std::abs(cout[i])));
   }
 
   #ifdef DEBUG
-    std::cout << "PyList populated" << std::endl;
+    std::cout << "PyTuple populated" << std::endl;
   #endif
-
-  free(cout);
 
   #ifdef DEBUG
     std::cout << "freed mem" << std::endl;

@@ -48,6 +48,9 @@ def audio_comp():
   a1 = slice_audio(wave_to_list('tests/samples/jiehan-jiehan.wav'),2048, 'a1')
   a2 = slice_audio(wave_to_list('tests/samples/jiehan-sean.wav'),2048, 'a2')
 
+  # print a1
+  # print a1[0].data
+
   time_started = time()
   
   result = max_slice_tree_score(a1, a2)
